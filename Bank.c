@@ -126,6 +126,11 @@ int main(int argc, char *argv[])
         }
         else
         {
+            if(IbanExists==1)
+            {
+                printf("Iban already exists! Try again!");
+                Create();
+            }
             Create();
         }
     }

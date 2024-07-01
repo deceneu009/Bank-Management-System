@@ -1,10 +1,32 @@
 #include "Functionalities.h"
 
+int check_Iban(char *iban)
+{
+    FILE *Test_Iban = fopen("Ibans.csv", "r+");
+
+    char line[256];
+
+    while (fgets(line, sizeof(line), Test_Iban) != NULL)
+    {
+        // check if Iban exists already
+        if (line == iban)
+        {
+            IbanExists = 1;
+            break;
+        }
+        // if not it will be go forward in testing and assign it to the user
+    }
+    return IbanExists;
+}
+
 // function for creating an account
 void Create_account(char Filename[], char Owner[])
 {
     FILE *fp = fopen(Filename, "a");
+    char *Coin = malloc(7), *Iban = malloc(35);
     char *endptr;
+
+    IbanExists = 0;
 
     if (fp == NULL)
     {
@@ -14,35 +36,21 @@ void Create_account(char Filename[], char Owner[])
 
     int ok = 1;
     unsigned long long int Amounts;
-    char *Coin = malloc(7), *Iban = malloc(35);
 
     // We read the data from the console
     // Prompt user to enter IBAN until a valid one is provided
     while (ok)
-    {   
+    {
         // header template
         fprintf(fp, "Owner,IBAN,Coin,Amount");
 
-        printf("Enter IBAN:");
-        // reading the spaces too
-        scanf(" %[^\n]%*c", Iban);
-        FILE *Test_Iban = fopen("Ibans.csv", "r+");
-
-        char line[256];
-        int IbanExists = 0;
-
-        while (fgets(line, sizeof(line), Test_Iban) != NULL)
+        do
         {
-            // check if Iban exists already
-            if (line == Iban)
-            {
-                IbanExists = 1;
-                break;
-            }
-            // if not it will be go forward in testing and assign it to the user
-        }
-        if (IbanExists == 0)
-        {
+            printf("Enter IBAN:");
+
+            // reading the spaces too
+            scanf(" %[^\n]%*c", Iban);
+
             // Remove trailing newline character, if any
             size_t len = strlen(Iban);
             if (len > 0 && Iban[len - 1] == '\n')
@@ -70,48 +78,59 @@ void Create_account(char Filename[], char Owner[])
             {
                 ok = 0; // Exit the loop if IBAN is valid
             }
-        }
+
+            while (strlen(Iban) > 34)
+            {
+                printf("Error...Iban too long\n");
+                continue;
+            }
+            // checks if Iban already was included
+            IbanExists = check_Iban(Iban);
+        } while (IbanExists == 1);
+
+        do
+        {
+            int flag = 0;
+            printf("Enter Coin:");
+            scanf("%s", Coin);
+
+            // Check the size
+            if (strlen(Coin) > 6)
+            {
+                printf("Error...The type of coin doesn't exist\n");
+                continue;
+            }
+
+            // Validate that Coin contains only alphabetic characters
+            for (int i = 0; Coin[i] != '\0'; i++)
+            {
+                if (!isalpha(Coin[i]))
+                {
+                    printf("Error...Coin must contain only alphabetic characters\n");
+                    // if the coin contains numbers we will flag this thing and go to the next loop
+                    flag = 1;
+                    break;
+                }
+            }
+            if(flag == 1)
+            {
+                continue;
+            }
+            strupr(Coin);
+            break;
+        } while (1);
 
         // checking the size of Iban
-        while (strlen(Iban) > 34)
-        {
-            printf("Error...Iban too long\n");
-            printf("Enter IBAN:");
-            scanf("%34s", Iban);
-        }
-
-        printf("Enter Coin:");
-        scanf("%s", Coin);
-
-        // Check the size
-        while (strlen(Coin) > 6)
-        {
-            printf("Error...The type of coin doesn't exist\n");
-            printf("Enter Coin:");
-            scanf(" %s", Coin);
-        }
-
-        // Validate that Coin contains only alphabetic characters
-        int i;
-        for (i = 0; Coin[i] != '\0'; i++)
-        {
-            if (!isalpha(Coin[i]))
-            {
-                printf("Error...Coin must contain only alphabetic characters\n");
-                printf("Enter Coin:");
-                scanf(" %s", Coin);
-                i = -1; // Reset i to check the entire input again
-            }
-        }
-        strupr(Coin);
 
         // reading the amount and checking the size
         while (1)
         {
             printf("Enter Amount:");
             scanf(" %llu", &Amounts);
-            if (Amounts < ULLONG_MAX)
+            if (Amounts < ULLONG_MAX && Amounts >= 0)
                 break;
+            else if (Amounts < ULLONG_MAX && Amounts < 0)
+                continue;
             else
                 printf("Amount too big! Try another one\n");
         }
@@ -120,6 +139,7 @@ void Create_account(char Filename[], char Owner[])
         // Print it inside the .csv file
         fprintf(fp, "\n%s,%s,%s,%llu", Owner, Iban, Coin, Amounts);
     }
+
     // we close the file
     fclose(fp);
 

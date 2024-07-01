@@ -9,6 +9,8 @@
 #include <ctype.h>
 #include <errno.h>
 
+extern int IbanExists = 0;
+
 // function for creating an account
 void Create_account(char Filename[], char Owner[]);
 
