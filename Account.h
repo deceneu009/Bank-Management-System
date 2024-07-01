@@ -22,6 +22,8 @@ void Transaction();
 
 void Delete();
 
+void Add_New_Account();
+
 #endif
 
 

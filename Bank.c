@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
 
             // Create a new account
             case 5:
-                //Add_new_account();
+                Add_New_Account();
                 break;
             // Exit
             case 6:

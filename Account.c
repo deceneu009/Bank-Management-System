@@ -90,3 +90,8 @@ void Delete()
 {
     deleteAccount(filename);
 }
+
+void Add_New_Account()
+{
+    
+}

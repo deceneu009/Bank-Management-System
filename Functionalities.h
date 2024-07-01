@@ -24,4 +24,7 @@ void deleteAccount(char Filename[]);
 // Transaction between two accounts
 void Transactions(char Filename1[], char Filename2[]);
 
+//create a new account to an already existing .csv file with the same owned by the same person
+void Create_new_account(char Filename[], char Owner[]);
+
 #endif

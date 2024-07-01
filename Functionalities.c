@@ -12,6 +12,133 @@ void Create_account(char Filename[], char Owner[])
         exit(EXIT_FAILURE);
     }
 
+    int ok = 1;
+    unsigned long long int Amounts;
+    char *Coin = malloc(7), *Iban = malloc(35);
+
+    // We read the data from the console
+    // Prompt user to enter IBAN until a valid one is provided
+    while (ok)
+    {   
+        // header template
+        fprintf(fp, "Owner,IBAN,Coin,Amount");
+
+        printf("Enter IBAN:");
+        // reading the spaces too
+        scanf(" %[^\n]%*c", Iban);
+        FILE *Test_Iban = fopen("Ibans.csv", "r+");
+
+        char line[256];
+        int IbanExists = 0;
+
+        while (fgets(line, sizeof(line), Test_Iban) != NULL)
+        {
+            // check if Iban exists already
+            if (line == Iban)
+            {
+                IbanExists = 1;
+                break;
+            }
+            // if not it will be go forward in testing and assign it to the user
+        }
+        if (IbanExists == 0)
+        {
+            // Remove trailing newline character, if any
+            size_t len = strlen(Iban);
+            if (len > 0 && Iban[len - 1] == '\n')
+            {
+                Iban[len - 1] = '\0';
+            }
+
+            // Check if IBAN contains spaces
+            int hasSpace = 0;
+            for (int i = 0; i < strlen(Iban); i++)
+            {
+                if (Iban[i] == ' ')
+                {
+                    hasSpace = 1;
+                    break;
+                }
+            }
+
+            // If IBAN contains spaces, prompt again
+            if (hasSpace)
+            {
+                printf("Please enter your IBAN without spaces!\n");
+            }
+            else
+            {
+                ok = 0; // Exit the loop if IBAN is valid
+            }
+        }
+
+        // checking the size of Iban
+        while (strlen(Iban) > 34)
+        {
+            printf("Error...Iban too long\n");
+            printf("Enter IBAN:");
+            scanf("%34s", Iban);
+        }
+
+        printf("Enter Coin:");
+        scanf("%s", Coin);
+
+        // Check the size
+        while (strlen(Coin) > 6)
+        {
+            printf("Error...The type of coin doesn't exist\n");
+            printf("Enter Coin:");
+            scanf(" %s", Coin);
+        }
+
+        // Validate that Coin contains only alphabetic characters
+        int i;
+        for (i = 0; Coin[i] != '\0'; i++)
+        {
+            if (!isalpha(Coin[i]))
+            {
+                printf("Error...Coin must contain only alphabetic characters\n");
+                printf("Enter Coin:");
+                scanf(" %s", Coin);
+                i = -1; // Reset i to check the entire input again
+            }
+        }
+        strupr(Coin);
+
+        // reading the amount and checking the size
+        while (1)
+        {
+            printf("Enter Amount:");
+            scanf(" %llu", &Amounts);
+            if (Amounts < ULLONG_MAX)
+                break;
+            else
+                printf("Amount too big! Try another one\n");
+        }
+
+        printf("\n");
+        // Print it inside the .csv file
+        fprintf(fp, "\n%s,%s,%s,%llu", Owner, Iban, Coin, Amounts);
+    }
+    // we close the file
+    fclose(fp);
+
+    // we free the memory
+    free(Coin);
+    free(Iban);
+}
+
+void Create_new_account(char Filename[], char Owner[])
+{
+    FILE *fp = fopen(Filename, "a");
+    char *endptr;
+
+    if (fp == NULL)
+    {
+        perror("Error opening file");
+        exit(EXIT_FAILURE);
+    }
+
     // header template
     fprintf(fp, "Owner,IBAN,Coin,Amount");
 
@@ -23,93 +150,7 @@ void Create_account(char Filename[], char Owner[])
     // Prompt user to enter IBAN until a valid one is provided
     while (ok)
     {
-        printf("Enter IBAN:");
-        // reading the spaces too
-        scanf(" %[^\n]%*c", Iban);
-
-        // Remove trailing newline character, if any
-        size_t len = strlen(Iban);
-        if (len > 0 && Iban[len - 1] == '\n')
-        {
-            Iban[len - 1] = '\0';
-        }
-
-        // Check if IBAN contains spaces
-        int hasSpace = 0;
-        for (int i = 0; i < strlen(Iban); i++)
-        {
-            if (Iban[i] == ' ')
-            {
-                hasSpace = 1;
-                break;
-            }
-        }
-
-        // If IBAN contains spaces, prompt again
-        if (hasSpace)
-        {
-            printf("Please enter your IBAN without spaces!\n");
-        }
-        else
-        {
-            ok = 0; // Exit the loop if IBAN is valid
-        }
     }
-
-    // checking the size of Iban
-    while (strlen(Iban) > 34)
-    {
-        printf("Error...Iban too long\n");
-        printf("Enter IBAN:");
-        scanf("%34s", Iban);
-    }
-
-    printf("Enter Coin:");
-    scanf("%s", Coin);
-
-    // Check the size
-    while (strlen(Coin) > 6)
-    {
-        printf("Error...The type of coin doesn't exist\n");
-        printf("Enter Coin:");
-        scanf(" %s", Coin);
-    }
-
-    // Validate that Coin contains only alphabetic characters
-    int i;
-    for (i = 0; Coin[i] != '\0'; i++)
-    {
-        if (!isalpha(Coin[i]))
-        {
-            printf("Error...Coin must contain only alphabetic characters\n");
-            printf("Enter Coin:");
-            scanf(" %s", Coin);
-            i = -1; // Reset i to check the entire input again
-        }
-    }
-    strupr(Coin);
-
-    // reading the amount and checking the size
-    while (1)
-    {
-        printf("Enter Amount:");
-        scanf(" %llu", &Amounts);
-        if (Amounts < ULLONG_MAX)
-            break;
-        else
-            printf("Amount too big! Try another one\n");
-    }
-
-    printf("\n");
-    // Print it inside the .csv file
-    fprintf(fp, "\n%s,%s,%s,%llu", Owner, Iban, Coin, Amounts);
-
-    // we close the file
-    fclose(fp);
-
-    // we free the memory
-    free(Coin);
-    free(Iban);
 }
 
 // Function for viewing an account
