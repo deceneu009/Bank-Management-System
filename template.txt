@@ -1,0 +1,9 @@
+Owner,IBAN,Coin,Amount
+Stefan,12412341234123,RON,18446744073709551614
+
+TO DO:
+
+1. Check unicity of Ibans
+2. Allow multiple accounts owned by same person
+3. Delete certain accounts
+4. Transaction between accounts owned by same person

@@ -1,0 +1,6 @@
+gcc -o Bank.exe Bank.c -g
+.\Bank.exe [surname][name]
+            |
+            |
+           \|/
+.\Bank.exe Stefan Eu
