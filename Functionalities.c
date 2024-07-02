@@ -158,13 +158,13 @@ void Create_new_account(char Filename[], char Owner[])
         perror("Error opening file");
         exit(EXIT_FAILURE);
     }
-
+    
     // header template
     fprintf(fp, "Owner,IBAN,Coin,Amount");
 
     int ok = 1;
     unsigned long long int Amounts;
-    char *Coin = malloc(7), *Iban = malloc(35); //*Amount = malloc(30);
+    char *Coin = malloc(7);
 
     // We read the data from the console
     // Prompt user to enter IBAN until a valid one is provided

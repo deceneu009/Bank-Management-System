@@ -1,6 +1,6 @@
 #include "Account.h"
 
-char *name = NULL, *surname = NULL,*fullname = NULL, *filename = NULL;
+char *name = NULL, *surname = NULL, *fullname = NULL, *filename = NULL;
 
 void Edit()
 {
@@ -93,5 +93,59 @@ void Delete()
 
 void Add_New_Account()
 {
-    
+}
+
+char *person_init(char *argv1, char *argv2)
+{
+    // we put the arguments into the variables surname and name which will becaome the fullname
+    surname = argv1;
+    name = argv2;
+
+    // Validate input strings
+    if (surname[0] == '\0' || name[0] == '\0')
+    {
+        printf("Surname and name must not be empty\n");
+        return "error";
+    }
+
+    strlwr(name);
+    strlwr(surname);
+
+    fullname = malloc(sizeof(name) + sizeof(surname) + 1);
+
+    strcpy(fullname, strcat(surname, name));
+    filename = malloc(strlen(fullname) + 5); // ".csv" + null terminator
+    if (filename == NULL)
+    {
+        perror("Error allocating memory");
+        return "error";
+    }
+    strcpy(filename, fullname);
+    // we concatenate the fullname and .csv in order to create the csv file and access it by the fullname
+    strcat(filename, ".csv");
+
+    return filename;
+}
+
+int check_option(int option)
+{
+    // Read the option (in case it is not an integer it will print an error)
+    while (scanf(" %d", &option) != 1)
+    {
+        printf("\nInvalid input. Please enter a number from 1 to 6!.\n");
+
+        // Clear input buffer
+        int c;
+        while ((c = getchar()) != '\n' && c != EOF)
+            continue; // Restart the loop
+
+        if (c == '\n')
+        {
+            printf("Choose:");
+        }
+        // return 1;
+    }
+    printf("\n");
+
+    return option;
 }

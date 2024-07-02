@@ -24,6 +24,10 @@ void Delete();
 
 void Add_New_Account();
 
+char* person_init(char* argv1, char* argv2);
+
+int check_option(int option);
+
 #endif
 
 
