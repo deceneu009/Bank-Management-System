@@ -1,4 +1,8 @@
 #include "Account.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
 
 char *name = NULL, *surname = NULL, *fullname = NULL, *filename = NULL;
 
@@ -9,19 +13,17 @@ void Edit()
     printf("And which column do you want to modify?(IBAN, Coin, Amount)\n");
     scanf("%9s", column);
 
-    // Convert both input and options to lowercase for case-insensitive comparison
-    char columnLower[10];
-    strcpy(columnLower, column);
-    for (int i = 0; columnLower[i]; i++)
+    // Convert input to lowercase
+    for (int i = 0; column[i]; i++)
     {
-        columnLower[i] = tolower(columnLower[i]);
+        column[i] = tolower(column[i]);
     }
 
     // Check if the input matches any of the options
     int found = 0;
     for (int i = 0; i < sizeof(Opt) / sizeof(Opt[0]); i++)
     {
-        if (strcasecmp(columnLower, Opt[i]) == 0)
+        if (strcasecmp(column, Opt[i]) == 0)
         {
             found = 1;
             break;
@@ -65,10 +67,17 @@ void Transaction()
     printf("\n");
 
     // Same thing as the first fullname. We concatenate surname with name in order to obtain the second fullname
-    strlwr(surname2);
-    strlwr(name2);
-    strcpy(fullname2, strcat(surname2, name2));
-    filename2 = (char *)malloc(strlen(fullname) + 5);
+    for (int i = 0; surname2[i]; i++)
+    {
+        surname2[i] = tolower(surname2[i]);
+    }
+    for (int i = 0; name2[i]; i++)
+    {
+        name2[i] = tolower(name2[i]);
+    }
+    strcpy(fullname2, surname2);
+    strcat(fullname2, name2);
+    filename2 = (char *)malloc(strlen(fullname2) + 5);
     strcpy(filename2, fullname2);
     // we concatenate the fullname and .csv in order to create the csv file and access it by the fullname
     strcat(filename2, ".csv");
@@ -93,11 +102,12 @@ void Delete()
 
 void Add_New_Account()
 {
+    Create();
 }
 
 char *person_init(char *argv1, char *argv2)
 {
-    // we put the arguments into the variables surname and name which will becaome the fullname
+    // we put the arguments into the variables surname and name which will become the fullname
     surname = argv1;
     name = argv2;
 
@@ -108,20 +118,32 @@ char *person_init(char *argv1, char *argv2)
         return "error";
     }
 
-    strlwr(name);
-    strlwr(surname);
+    for (int i = 0; name[i]; i++)
+    {
+        name[i] = tolower(name[i]);
+    }
+    for (int i = 0; surname[i]; i++)
+    {
+        surname[i] = tolower(surname[i]);
+    }
 
-    fullname = malloc(sizeof(name) + sizeof(surname) + 1);
-
-    strcpy(fullname, strcat(surname, name));
-    filename = malloc(strlen(fullname) + 5); // ".csv" + null terminator
-    if (filename == NULL)
+    fullname = malloc(strlen(name) + strlen(surname) + 1);
+    if (fullname == NULL)
     {
         perror("Error allocating memory");
         return "error";
     }
+    strcpy(fullname, surname);
+    strcat(fullname, name);
+
+    filename = malloc(strlen(fullname) + 5); // ".csv" + null terminator
+    if (filename == NULL)
+    {
+        perror("Error allocating memory");
+        free(fullname);
+        return "error";
+    }
     strcpy(filename, fullname);
-    // we concatenate the fullname and .csv in order to create the csv file and access it by the fullname
     strcat(filename, ".csv");
 
     return filename;
@@ -130,7 +152,7 @@ char *person_init(char *argv1, char *argv2)
 int check_option(int option)
 {
     // Read the option (in case it is not an integer it will print an error)
-    while (scanf(" %d", &option) != 1)
+    while (scanf(" %d", &option) != 1 || option < 1 || option > 6)
     {
         printf("\nInvalid input. Please enter a number from 1 to 6!.\n");
 
@@ -139,11 +161,7 @@ int check_option(int option)
         while ((c = getchar()) != '\n' && c != EOF)
             continue; // Restart the loop
 
-        if (c == '\n')
-        {
-            printf("Choose:");
-        }
-        // return 1;
+        printf("Choose:");
     }
     printf("\n");
 

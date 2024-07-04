@@ -1,22 +1,171 @@
 #include "Functionalities.h"
 
+int IbanExists = 0;
+
 int check_Iban(char *iban)
 {
-    FILE *Test_Iban = fopen("Ibans.csv", "r+");
+    int IbanExists;                            // Initialize the variable
+    FILE *Test_Iban = fopen("Ibans.csv", "r"); // Open file in read mode
+
+    if (Test_Iban == NULL)
+    {
+        perror("Error opening file");
+        return -1; // Return error code if file cannot be opened
+    }
 
     char line[256];
 
     while (fgets(line, sizeof(line), Test_Iban) != NULL)
     {
-        // check if Iban exists already
-        if (line == iban)
+        // Remove newline character from the line if it exists
+        line[strcspn(line, "\n")] = 0;
+
+        // Check if Iban exists already
+        if (strcmp(line, iban) == 0)
         {
             IbanExists = 1;
             break;
         }
-        // if not it will be go forward in testing and assign it to the user
     }
+
+    fclose(Test_Iban); // Close the file
+
+    if (IbanExists == 0)
+    {
+        // Open file in append mode to write the new Iban
+        Test_Iban = fopen("Ibans.csv", "a");
+        if (Test_Iban != NULL)
+        {
+            fprintf(Test_Iban, "%s\n", iban);
+            if (fflush(Test_Iban) != 0)
+            {
+                perror("Error flushing file");
+                fclose(Test_Iban);
+                return -1;
+            }
+            fclose(Test_Iban);
+        }
+        else
+        {
+            perror("Error opening file for appending");
+            return -1;
+        }
+    }
+
     return IbanExists;
+}
+
+char *GetIban()
+{
+    char *Iban = malloc(35);
+    int exist = 1;
+    do
+    {
+        printf("Enter IBAN:");
+
+        // reading the spaces too
+        scanf(" %[^\n]%*c", Iban);
+
+        // Remove trailing newline character, if any
+        size_t len = strlen(Iban);
+        if (len > 0 && Iban[len - 1] == '\n')
+        {
+            Iban[len - 1] = '\0';
+        }
+
+        // Check if IBAN contains spaces
+        int hasSpace = 0;
+        for (int i = 0; i < strlen(Iban); i++)
+        {
+            if (Iban[i] == ' ')
+            {
+                hasSpace = 1;
+                break;
+            }
+        }
+
+        // If IBAN contains spaces, prompt again
+        if (hasSpace)
+        {
+            printf("Please enter your IBAN without spaces!\n");
+            continue;
+        }
+
+        while (strlen(Iban) > 34)
+        {
+            printf("Error...Iban too long\n");
+            continue;
+        }
+        // checks if Iban already was included
+        IbanExists = check_Iban(Iban);
+        if (IbanExists == 1)
+        {
+            printf("Iban already exists! Try again!");
+            continue;
+        }
+        exist = 0;
+
+    } while (exist == 1);
+    return Iban;
+}
+
+char *GetCoin()
+{
+    char *Coin = malloc(7);
+    do
+    {
+        int flag = 0;
+        printf("Enter Coin:");
+        scanf("%s", Coin);
+
+        // Check the size
+        if (strlen(Coin) > 6)
+        {
+            printf("Error...The type of coin doesn't exist\n");
+            continue;
+        }
+
+        // Validate that Coin contains only alphabetic characters
+        for (int i = 0; Coin[i] != '\0'; i++)
+        {
+            if (!isalpha(Coin[i]))
+            {
+                printf("Error...Coin must contain only alphabetic characters\n");
+                // if the coin contains numbers we will flag this thing and go to the next loop
+                flag = 1;
+                break;
+            }
+        }
+        if (flag == 1)
+        {
+            continue;
+        }
+        strupr(Coin);
+        break;
+    } while (1);
+    return Coin;
+}
+
+int GetAmount()
+{
+    unsigned long long int Amounts;
+    // reading the amount and checking the size
+    while (1)
+    {
+        printf("Enter Amount:");
+        scanf(" %llu", &Amounts);
+        if (Amounts < ULLONG_MAX && Amounts >= 0)
+            break;
+        else
+            printf("Amount too big! Try another one\n");
+
+        if (Amounts < 0)
+        {
+            printf("The amount can't be less than 0");
+            continue;
+        }
+    }
+    return Amounts;
 }
 
 // function for creating an account
@@ -24,7 +173,6 @@ void Create_account(char Filename[], char Owner[])
 {
     FILE *fp = fopen(Filename, "a");
     char *Coin = malloc(7), *Iban = malloc(35);
-    char *endptr;
 
     IbanExists = 0;
 
@@ -34,111 +182,27 @@ void Create_account(char Filename[], char Owner[])
         exit(EXIT_FAILURE);
     }
 
-    int ok = 1;
     unsigned long long int Amounts;
+
+    char line[256];
+    int rows;
+    while (fgets(line, sizeof(line), fp) != NULL)
+    {
+        rows++;
+    }
+    if (rows == 0)
+    {
+        fprintf(fp, "Owner,IBAN,Coin,Amount");
+    }
 
     // We read the data from the console
     // Prompt user to enter IBAN until a valid one is provided
-    while (ok)
-    {
-        // header template
-        fprintf(fp, "Owner,IBAN,Coin,Amount");
+    Iban = GetIban();
+    Coin = GetCoin();
+    Amounts = GetAmount();
 
-        do
-        {
-            printf("Enter IBAN:");
-
-            // reading the spaces too
-            scanf(" %[^\n]%*c", Iban);
-
-            // Remove trailing newline character, if any
-            size_t len = strlen(Iban);
-            if (len > 0 && Iban[len - 1] == '\n')
-            {
-                Iban[len - 1] = '\0';
-            }
-
-            // Check if IBAN contains spaces
-            int hasSpace = 0;
-            for (int i = 0; i < strlen(Iban); i++)
-            {
-                if (Iban[i] == ' ')
-                {
-                    hasSpace = 1;
-                    break;
-                }
-            }
-
-            // If IBAN contains spaces, prompt again
-            if (hasSpace)
-            {
-                printf("Please enter your IBAN without spaces!\n");
-            }
-            else
-            {
-                ok = 0; // Exit the loop if IBAN is valid
-            }
-
-            while (strlen(Iban) > 34)
-            {
-                printf("Error...Iban too long\n");
-                continue;
-            }
-            // checks if Iban already was included
-            IbanExists = check_Iban(Iban);
-        } while (IbanExists == 1);
-
-        do
-        {
-            int flag = 0;
-            printf("Enter Coin:");
-            scanf("%s", Coin);
-
-            // Check the size
-            if (strlen(Coin) > 6)
-            {
-                printf("Error...The type of coin doesn't exist\n");
-                continue;
-            }
-
-            // Validate that Coin contains only alphabetic characters
-            for (int i = 0; Coin[i] != '\0'; i++)
-            {
-                if (!isalpha(Coin[i]))
-                {
-                    printf("Error...Coin must contain only alphabetic characters\n");
-                    // if the coin contains numbers we will flag this thing and go to the next loop
-                    flag = 1;
-                    break;
-                }
-            }
-            if(flag == 1)
-            {
-                continue;
-            }
-            strupr(Coin);
-            break;
-        } while (1);
-
-        // checking the size of Iban
-
-        // reading the amount and checking the size
-        while (1)
-        {
-            printf("Enter Amount:");
-            scanf(" %llu", &Amounts);
-            if (Amounts < ULLONG_MAX && Amounts >= 0)
-                break;
-            else if (Amounts < ULLONG_MAX && Amounts < 0)
-                continue;
-            else
-                printf("Amount too big! Try another one\n");
-        }
-
-        printf("\n");
-        // Print it inside the .csv file
-        fprintf(fp, "\n%s,%s,%s,%llu", Owner, Iban, Coin, Amounts);
-    }
+    // Print it inside the .csv file
+    fprintf(fp, "%s,%s,%s,%llu", Owner, Iban, Coin, Amounts);
 
     // we close the file
     fclose(fp);
@@ -148,30 +212,30 @@ void Create_account(char Filename[], char Owner[])
     free(Iban);
 }
 
-void Create_new_account(char Filename[], char Owner[])
-{
-    FILE *fp = fopen(Filename, "a");
-    char *endptr;
+// void Create_new_account(char Filename[], char Owner[])
+// {
+//     FILE *fp = fopen(Filename, "a");
+//     char *endptr;
 
-    if (fp == NULL)
-    {
-        perror("Error opening file");
-        exit(EXIT_FAILURE);
-    }
-    
-    // header template
-    fprintf(fp, "Owner,IBAN,Coin,Amount");
+//     if (fp == NULL)
+//     {
+//         perror("Error opening file");
+//         exit(EXIT_FAILURE);
+//     }
 
-    int ok = 1;
-    unsigned long long int Amounts;
-    char *Coin = malloc(7);
+//     // header template
+//     fprintf(fp, "Owner,IBAN,Coin,Amount");
 
-    // We read the data from the console
-    // Prompt user to enter IBAN until a valid one is provided
-    while (ok)
-    {
-    }
-}
+//     int ok = 1;
+//     unsigned long long int Amounts;
+//     char *Coin = malloc(7);
+
+//     // We read the data from the console
+//     // Prompt user to enter IBAN until a valid one is provided
+//     while (ok)
+//     {
+//     }
+// }
 
 // Function for viewing an account
 void View_account(char Filename[])
@@ -233,7 +297,6 @@ void deleteAccount(char Filename[])
 void Transactions(char Filename1[], char Filename2[])
 {
     char *filenameT1, *filenameT2;
-    char *endPtr;
 
     filenameT1 = (char *)malloc(strlen(Filename1) + 5);
     strcpy(filenameT1, Filename1);
@@ -421,9 +484,6 @@ void Transactions(char Filename1[], char Filename2[])
 
     currentRow1 = 0;
 
-    // we delete the old content from amounts1
-    free(amounts1);
-
     // rewind the OriginalFile1 so that it begins the reading from the beginning again
     rewind(originalFile1);
 
@@ -462,9 +522,6 @@ void Transactions(char Filename1[], char Filename2[])
     }
 
     currentRow2 = 0;
-
-    // we delete the old content from amounts2
-    free(amounts2);
 
     // rewind the OriginalFile2 so that it begins the reading from the beginning again
     rewind(originalFile2);
@@ -569,24 +626,20 @@ void Edit_account(char ColumnToEdit[], char Filename[])
 
     ColumnToEdit = strlwr(ColumnToEdit);
 
-    char line[256];
     int currentRow = 0;
-    int ok = 1;
-    char *token, *Iban = malloc(35), *Coin = malloc(7); //*copy;
-
-    if (token == NULL)
-    {
-        perror("Tokenizing error");
-        exit(EXIT_FAILURE);
-    }
+    char *token, *Iban = malloc(35), *Coin = malloc(7), line[256]; //*copy;
 
     while (fgets(line, sizeof(line), originalFile) != NULL)
     {
-
         if (currentRow == 1)
         {
             // copy = strdup(line);
             token = strtok(line, ",");
+            if (token == NULL)
+            {
+                perror("Tokenizing error");
+                exit(EXIT_FAILURE);
+            }
 
             // print Owner
             fprintf(tempFile, "%s,", token);
@@ -594,51 +647,7 @@ void Edit_account(char ColumnToEdit[], char Filename[])
             // Check if the column we want to edit is the Iban column and then update the token so that the next prints in the .csv file will have the correct column element
             if (strcmp(ColumnToEdit, "iban") == 0)
             {
-                while (ok)
-                {
-                    printf("Enter IBAN:");
-                    scanf(" %[^\n]%*c", Iban);
-
-                    // Remove trailing newline character, if any
-                    size_t len = strlen(Iban);
-                    if (len > 0 && Iban[len - 1] == '\n')
-                    {
-                        Iban[len - 1] = '\0';
-                    }
-
-                    // Check if IBAN contains spaces
-                    int hasSpace = 0;
-                    if (strlen(Iban) < 36) // this will need to be removed when implemented in the real model
-                    {
-                        for (int j = 0; j < strlen(Iban); j++)
-                        {
-                            if (Iban[j] == ' ')
-                            {
-                                hasSpace = 1;
-                                break;
-                            }
-                        }
-                    }
-
-                    // If IBAN contains spaces, prompt again
-                    if (hasSpace)
-                    {
-                        printf("Please enter your IBAN without spaces!\n");
-                    }
-                    else
-                    {
-                        ok = 0; // Exit the loop if IBAN is valid
-                    }
-                }
-
-                // checking the size of Iban
-                while (strlen(Iban) > 35)
-                {
-                    printf("Error...Iban too long\n");
-                    printf("Enter IBAN:");
-                    scanf("%s", Iban);
-                }
-                // strcpy(token, Iban);
+                Iban = GetIban();
                 fprintf(tempFile, "%s,", Iban);
                 token = strtok(NULL, ",");
             }
@@ -652,23 +661,7 @@ void Edit_account(char ColumnToEdit[], char Filename[])
             // Check if the column we want to edit is the coin column and then update the token so that the next prints in the .csv file will have the correct column element
             if (strcmp(ColumnToEdit, "coin") == 0)
             {
-                printf("Enter new coin:");
-                scanf(" %s", Coin);
-
-                // Validate that Coin contains only alphabetic characters and Check the size
-                int i;
-                for (i = 0; Coin[i] != '\0'; i++)
-                {
-
-                    if (!isalpha(Coin[i]) || strlen(Coin) > 6)
-                    {
-                        printf("Error...Coin must contain only alphabetic characters and be less than 6 characters\n");
-                        printf("Enter Coin:");
-                        scanf(" %s", Coin);
-                        i = -1; // Reset i to check the entire input again
-                    }
-                }
-                strupr(Coin);
+                Coin = GetCoin();
                 fprintf(tempFile, "%s,", Coin);
                 token = strtok(NULL, ",");
             }
@@ -680,62 +673,9 @@ void Edit_account(char ColumnToEdit[], char Filename[])
             // Check if the column we want to edit is the amount column and then update the token so that the next prints in the .csv file will have the correct column element
             if (strcmp(ColumnToEdit, "amount") == 0)
             {
-                char input[50];
-                unsigned long long int amount;
-                char *endptr;
-                int j = 0;
-                while (1)
-                {
-
-                    if (j == 1)
-                    {
-                        printf("Enter Amount: ");
-                    }
-                    j++;
-
-                    if (fgets(input, sizeof(input), stdin) == NULL)
-                    {
-                        printf("Error reading input.\n");
-                        exit(EXIT_FAILURE);
-                    }
-
-                    // Remove newline character from the input buffer
-                    size_t len = strlen(input);
-                    if (len > 0 && input[len - 1] == '\n')
-                    {
-                        input[len - 1] = '\0';
-                        len--; // Adjust length after removing newline
-                    }
-
-                    // Check if the input string contains only the newline character
-                    if (len == 0)
-                    {
-                        continue;
-                    }
-
-                    // Convert input string to unsigned long long int
-                    errno = 0;
-                    amount = strtoull(input, &endptr, 10);
-
-                    // Check for conversion errors or overflow
-                    if ((errno == ERANGE && (amount == ULLONG_MAX)) ||
-                        (errno != 0 && amount == 0) ||
-                        (endptr == input))
-                    {
-                        printf("Invalid input. Please enter a valid number.\n");
-                        continue;
-                    }
-
-                    // Check if the input value exceeds the maximum representable value
-                    if (amount > ULLONG_MAX)
-                    {
-                        printf("Error...Amount exceeds maximum limit\n");
-                        continue;
-                    }
-
-                    break; // Break out of the loop if input is valid
-                }
-                fprintf(tempFile, "%llu", amount);
+                unsigned long long Amount;
+                Amount = GetAmount();
+                fprintf(tempFile, "%llu", Amount);
                 token = strtok(NULL, ",");
             }
             else
@@ -743,7 +683,6 @@ void Edit_account(char ColumnToEdit[], char Filename[])
                 fprintf(tempFile, "%s", token);
                 token = strtok(NULL, ",");
             }
-
             break;
         }
         currentRow++;

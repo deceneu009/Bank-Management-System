@@ -3,25 +3,24 @@
 int main(int argc, char *argv[])
 {
     int continueflag = 0, i = 0;
-
     char *person;
 
     if (argc != 3)
     {
-        printf("You need to give two arguments(Name/surname)");
+        printf("You need to give two arguments(Name/surname)\n");
         return 1;
     }
 
     person = person_init(argv[1], argv[2]);
 
-    if (person != "error")
+    if (strcmp(person, "error") != 0)
     {
         while (continueflag == 0)
         {
-            // checks if file exists.if it does then we choose what we want to do with it. If it doesn't then we create it and then choose what we want to do with it
+            // checks if file exists. if it does then we choose what we want to do with it. If it doesn't then we create it and then choose what we want to do with it
             if (access(person, F_OK) != -1)
             {
-                int option;
+                int option = 0;  // Initialize option here
                 if (i == 0)
                 {
                     printf("\n");
@@ -42,28 +41,24 @@ int main(int argc, char *argv[])
                 {
                 // Edit account
                 case 1:
-
                     Edit();
                     i++;
                     break;
 
                 // Delete account
                 case 2:
-
                     Delete();
                     i++;
                     break;
 
                 // View Account
                 case 3:
-
                     View();
                     i = 1;
                     break;
 
                 // Perform account transactions
                 case 4:
-
                     Transaction();
                     i = 1;
                     break;
@@ -72,6 +67,7 @@ int main(int argc, char *argv[])
                 case 5:
                     Add_New_Account();
                     break;
+
                 // Exit
                 case 6:
                     continueflag = 1;
@@ -80,7 +76,6 @@ int main(int argc, char *argv[])
 
                 // Error
                 default:
-
                     printf("Error\n");
                     printf("\n=========================\n");
                     i = 1;
@@ -89,23 +84,12 @@ int main(int argc, char *argv[])
             }
             else
             {
-                if (IbanExists == 1)
-                {
-                    printf("Iban already exists! Try again!");
-                    Create();
-                }
-                else
-                {
-                    Create();
-                }
+                Create();
             }
         }
     }
 
-    free(filename);
-    free(name);
-    free(surname);
-    free(fullname);
+    free(person);
 
     return 0;
 }

@@ -7,3 +7,4 @@ TO DO:
 2. Allow multiple accounts owned by same person
 3. Delete certain accounts
 4. Transaction between accounts owned by same person
+5. After deleting an account make sure the Iban is also deleted from the Ibans.csv
