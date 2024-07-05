@@ -102,7 +102,7 @@ void Delete()
 
 void Add_New_Account()
 {
-    Create();
+    Create_new_account(filename, fullname);
 }
 
 char *person_init(char *argv1, char *argv2)
@@ -145,7 +145,7 @@ char *person_init(char *argv1, char *argv2)
     }
     strcpy(filename, fullname);
     strcat(filename, ".csv");
-
+    
     return filename;
 }
 
