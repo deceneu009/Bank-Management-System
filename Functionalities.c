@@ -2,10 +2,14 @@
 
 int IbanExists = 0;
 
-// void clr()
-// {
-
-// }
+void clearConsole()
+{
+#ifdef _WIN32
+    system("cls");
+#else
+    system("clear");
+#endif
+}
 
 int check_Iban(char *iban)
 {
@@ -154,26 +158,37 @@ char *GetCoin()
 int GetAmount()
 {
     unsigned long long int Amounts;
+    char term;
     // reading the amount and checking the size
-    while (1)
+    do
     {
         printf("Enter Amount:");
-        scanf(" %llu", &Amounts);
-        if (Amounts < ULLONG_MAX && Amounts >= 0)
-            break;
-        else
-            printf("Amount too big! Try another one\n");
-
-        if (Amounts < 0)
+        // check if the Amount was introduced correctly
+        if (scanf("%lld%c", &Amounts, &term) != 2 || term != '\n')
         {
-            printf("The amount can't be less than 0");
-            continue;
+            printf("Failure!The AMOUNT must contain only digits\n");
         }
-    }
+        // if it was then we check if it is less than the biggest lld value and if it is bigger than 0
+        else
+        {
+            if (Amounts < ULLONG_MAX && Amounts >= 0)
+                break;
+            else
+                printf("Amount too big! Try another one\n");
+
+            if (Amounts < 0)
+            {
+                printf("The amount can't be less than 0");
+                continue;
+            }
+        }
+    } while (1);
     return Amounts;
 }
 
+// initialize the User
 user User;
+
 // function for creating an account
 void Create_account(char Filename[], char Owner[])
 {
@@ -192,6 +207,7 @@ void Create_account(char Filename[], char Owner[])
 
     while (fgets(line, sizeof(line), fp) != NULL)
     {
+        // check if the file is new
         rows++;
         if (rows > 0)
         {
@@ -200,26 +216,26 @@ void Create_account(char Filename[], char Owner[])
     }
     if (rows == 0)
     {
+        // printing the header if the file is new
         fprintf(fp, "Owner,IBAN,Coin,Amount\n");
     }
 
-    // We read the data from the console
-    // Prompt user to enter IBAN until a valid one is provided
     User.Owner = Owner;
     User.Iban = GetIban();
     User.Coin = GetCoin();
     User.Amount = GetAmount();
 
-    // Print it inside the .csv file
+    // Print the user values inside the .csv file
     fprintf(fp, "%s,%s,%s,%llu", User.Owner, User.Iban, User.Coin, User.Amount);
 
     // we close the file
     fclose(fp);
+    clearConsole();
 }
 
 void Create_new_account(char Filename[], char Owner[])
 {
-    FILE *fp = fopen(Filename, "a");
+    FILE *fp = fopen(Filename, "r");
     fprintf(fp, "\n");
 
     char line[256], *token;
@@ -227,6 +243,7 @@ void Create_new_account(char Filename[], char Owner[])
 
     rewind(fp);
 
+    // getting the main values (The Owner's name and the Iban) from the respective Account .csv file and assigning them to the User
     while (fgets(line, sizeof(line), fp) != NULL)
     {
         row++;
@@ -245,14 +262,18 @@ void Create_new_account(char Filename[], char Owner[])
     User.Coin = GetCoin();
     User.Amount = GetAmount();
 
+    // printing the values
     fprintf(fp, "%s,%s,%s,%llu", User.Owner, User.Iban, User.Coin, User.Amount);
     fclose(fp);
+    clearConsole();
 }
 
 // Function for viewing an account
 void View_account(char Filename[])
 {
+    clearConsole();
     FILE *file = fopen(Filename, "r");
+    // check if the file exists
     if (file == NULL)
     {
         perror("Error opening file");
@@ -261,6 +282,7 @@ void View_account(char Filename[])
 
     char line[256];
 
+    //printing the lines from the .csv file
     while (fgets(line, sizeof(line), file) != NULL)
     {
         printf("%s", line);
@@ -303,6 +325,7 @@ void deleteAccount(char Filename[])
 
     free(fullname);
     // File has been successfully removed, no need to close it
+    clearConsole();
 }
 
 // Transaction between two accounts owned by the same person
@@ -623,6 +646,7 @@ void Transactions(char Filename1[], char Filename2[])
 
     free(filenameT1);
     free(filenameT2);
+    clearConsole();
 }
 
 void Edit_account(char ColumnToEdit[], char Filename[])
@@ -705,4 +729,5 @@ void Edit_account(char ColumnToEdit[], char Filename[])
 
     remove(Filename);
     rename("temp.csv", Filename);
+    clearConsole();
 }

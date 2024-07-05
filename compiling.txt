@@ -1,6 +1,6 @@
-gcc -o Bank.exe Bank.c -g
+gcc -o Bank.exe Bank.c Functionalities.c Account.c -g -Wall
 .\Bank.exe [surname][name]
             |
             |
            \|/
-.\Bank.exe Stefan Eu
+.\Bank.exe Stefan Eu 

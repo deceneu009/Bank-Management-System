@@ -8,6 +8,7 @@
 #include <limits.h>
 #include <ctype.h>
 #include <errno.h>
+#include <conio.h>
 
 typedef struct user
 {
