@@ -8,8 +8,7 @@ char *name = NULL, *surname = NULL, *fullname = NULL, *filename = NULL;
 
 void Edit()
 {
-    char column[10];
-    char *Opt[] = {"IBAN", "Coin", "Amount"};
+    char column[10], *Opt[] = {"IBAN", "Coin", "Amount"};
     printf("And which column do you want to modify?(IBAN, Coin, Amount)\n");
     scanf("%9s", column);
 
@@ -145,7 +144,7 @@ char *person_init(char *argv1, char *argv2)
     }
     strcpy(filename, fullname);
     strcat(filename, ".csv");
-    
+
     return filename;
 }
 
