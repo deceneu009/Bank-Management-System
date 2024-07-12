@@ -2,21 +2,7 @@
 #ifndef FUNCTIONALITIES_H_
 #define FUNCTIONALITIES_H_
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <limits.h>
-#include <ctype.h>
-#include <errno.h>
-#include <conio.h>
-
-typedef struct user
-{
-    char *Owner;
-    char *Iban;
-    char *Coin;
-    unsigned long long int Amount;
-} user;
+#include "utils.h"
 
 // function for creating an account
 void Create_account(char Filename[], char Owner[]);

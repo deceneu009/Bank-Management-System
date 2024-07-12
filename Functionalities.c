@@ -1,192 +1,6 @@
 #include "Functionalities.h"
 
-int IbanExists = 0;
-// initialize the User
-user User;
-
-void clearConsole()
-{
-#ifdef _WIN32
-    system("cls");
-#else
-    system("clear");
-#endif
-}
-
-int check_Iban(char *Iban, char *Owner)
-{
-    int IbanExists;                            // Initialize the variable
-    FILE *Test_Iban = fopen("Ibans.csv", "r"); // Open file in read mode
-
-    if (Test_Iban == NULL)
-    {
-        perror("Error opening file");
-        return -1; // Return error code if file cannot be opened
-    }
-
-    char line[256];
-
-    while (fgets(line, sizeof(line), Test_Iban) != NULL)
-    {
-        // Remove newline character from the line if it exists
-        line[strcspn(line, "\n")] = 0;
-
-        // Check if Iban exists already
-        if (strcmp(line, Iban) == 0)
-        {
-            IbanExists = 1;
-            break;
-        }
-    }
-
-    fclose(Test_Iban); // Close the file
-
-    if (IbanExists == 0)
-    {
-        // Open file in append mode to write the new Iban
-        Test_Iban = fopen("Ibans.csv", "a");
-        if (Test_Iban != NULL)
-        {
-            fprintf(Test_Iban, "%s,%s\n", Owner, Iban);
-            if (fflush(Test_Iban) != 0)
-            {
-                perror("Error flushing file");
-                fclose(Test_Iban);
-                return -1;
-            }
-            fclose(Test_Iban);
-        }
-        else
-        {
-            perror("Error opening file for appending");
-            return -1;
-        }
-    }
-
-    return IbanExists;
-}
-
-char *GetIban()
-{
-    char *Iban = malloc(35);
-    int exist = 1;
-    do
-    {
-        printf("Enter IBAN:");
-
-        // reading the spaces too
-        scanf(" %[^\n]%*c", Iban);
-
-        // Remove trailing newline character, if any
-        size_t len = strlen(Iban);
-        if (len > 0 && Iban[len - 1] == '\n')
-        {
-            Iban[len - 1] = '\0';
-        }
-
-        // Check if IBAN contains spaces
-        int hasSpace = 0;
-        for (int i = 0; i < strlen(Iban); i++)
-        {
-            if (Iban[i] == ' ')
-            {
-                hasSpace = 1;
-                break;
-            }
-        }
-
-        // If IBAN contains spaces, prompt again
-        if (hasSpace)
-        {
-            printf("Please enter your IBAN without spaces!\n");
-            continue;
-        }
-
-        while (strlen(Iban) > 34)
-        {
-            printf("Error...Iban too long\n");
-            continue;
-        }
-        // checks if Iban already was included
-        IbanExists = check_Iban(Iban, User.Owner);
-        if (IbanExists == 1)
-        {
-            printf("Iban already exists! Try again!");
-            continue;
-        }
-        exist = 0;
-
-    } while (exist == 1);
-    return Iban;
-}
-
-char *GetCoin()
-{
-    char *Coin = malloc(7);
-    do
-    {
-        int flag = 0;
-        printf("Enter Coin:");
-        scanf("%s", Coin);
-
-        // Check the size
-        if (strlen(Coin) > 6)
-        {
-            printf("Error...The type of coin doesn't exist\n");
-            continue;
-        }
-
-        // Validate that Coin contains only alphabetic characters
-        for (int i = 0; Coin[i] != '\0'; i++)
-        {
-            if (!isalpha(Coin[i]))
-            {
-                printf("Error...Coin must contain only alphabetic characters\n");
-                // if the coin contains numbers we will flag this thing and go to the next loop
-                flag = 1;
-                break;
-            }
-        }
-        if (flag == 1)
-        {
-            continue;
-        }
-        strupr(Coin);
-        break;
-    } while (1);
-    return Coin;
-}
-
-unsigned long long int GetAmount()
-{
-    unsigned long long int Amounts;
-    char term;
-    // reading the amount and checking the size
-    do
-    {
-        printf("Enter Amount:");
-        // check if the Amount was introduced correctly
-        if (scanf("%lld%c", &Amounts, &term) != 2 || term != '\n')
-        {
-            printf("Failure!The AMOUNT must contain only digits\n");
-        }
-        // if it was then we check if it is less than the biggest lld value and if it is bigger than 0
-        else
-        {
-            if (Amounts < ULLONG_MAX && Amounts >= 0)
-                break;
-            else
-                printf("Amount too big! Try another one\n");
-
-            if (Amounts < 0)
-            {
-                printf("The amount can't be less than 0");
-                continue;
-            }
-        }
-    } while (1);
-    return Amounts;
-}
+user Account;
 
 // function for creating an account
 void Create_account(char Filename[], char Owner[])
@@ -219,13 +33,13 @@ void Create_account(char Filename[], char Owner[])
         fprintf(fp, "Owner,IBAN,Coin,Amount\n");
     }
 
-    User.Owner = Owner;
-    User.Iban = GetIban();
-    User.Coin = GetCoin();
-    User.Amount = GetAmount();
+    Account.Owner = Owner;
+    Account.Iban = GetIban(0, Account.Owner);
+    Account.Coin = GetCoin();
+    Account.Amount = GetAmount();
 
     // Print the user values inside the .csv file
-    fprintf(fp, "%s,%s,%s,%llu", User.Owner, User.Iban, User.Coin, User.Amount);
+    fprintf(fp, "%s,%s,%s,%llu", Account.Owner, Account.Iban, Account.Coin, Account.Amount);
 
     // we close the file
     fclose(fp);
@@ -247,23 +61,23 @@ void Create_new_account(char Filename[], char Owner[])
         if (row == 1)
         {
             token = strtok(line, ",");
-            User.Owner = token;
+            Account.Owner = token;
             // printf("%s,%s", token, User.Owner);
             token = strtok(NULL, ",");
-            User.Iban = token;
+            Account.Iban = token;
             // printf("%s,%s", token, User.Owner);
             break;
         }
     }
 
-    User.Coin = GetCoin();
-    User.Amount = GetAmount();
+    Account.Coin = GetCoin();
+    Account.Amount = GetAmount();
     fclose(fp);
 
     // Opening the file in append mode to print the values inside the csv file
     FILE *fpAppend = fopen(Filename, "a");
     // printing the values
-    fprintf(fpAppend, "\n%s,%s,%s,%llu", User.Owner, User.Iban, User.Coin, User.Amount);
+    fprintf(fpAppend, "\n%s,%s,%s,%llu", Account.Owner, Account.Iban, Account.Coin, Account.Amount);
     fclose(fpAppend);
     clearConsole();
 }
@@ -272,7 +86,10 @@ void Create_new_account(char Filename[], char Owner[])
 void View_account(char Filename[])
 {
     clearConsole();
+    int number = -1;
+
     FILE *file = fopen(Filename, "r");
+
     // check if the file exists
     if (file == NULL)
     {
@@ -285,89 +102,191 @@ void View_account(char Filename[])
     // printing the lines from the .csv file
     while (fgets(line, sizeof(line), file) != NULL)
     {
-        printf("%s", line);
+        number++;
+        if (number == 0)
+        {
+            printf("%s", line);
+        }
+        else
+        {
+            printf("%d.%s", number, line);
+        }
     }
     printf("\n");
     fclose(file);
 }
 
-char *loadUserOwner(char Filename[])
-{
-    char line[256], *UserToken;
-    int row = -1;
-    FILE *fp = fopen(Filename, "r");
-
-    if (fp == NULL)
-    {
-        perror("Error opening file");
-        exit(EXIT_FAILURE);
-    }
-
-    while (fgets(line, sizeof(line), fp) != NULL)
-    {
-        row++;
-        if (row == 1) // Assuming the owner is on the second row (index 1)
-        {
-            UserToken = strtok(line, ",");
-            if (UserToken != NULL)
-            {
-                // Allocate memory and copy the string
-                User.Owner = malloc(strlen(UserToken) + 1);
-                if (User.Owner == NULL)
-                {
-                    perror("Error allocating memory");
-                    exit(EXIT_FAILURE);
-                }
-                strcpy(User.Owner, UserToken);
-            }
-            break;
-        }
-    }
-
-    fclose(fp);
-
-    if (row < 1) // Check if we read at least two lines
-    {
-        fprintf(stderr, "File does not contain enough lines\n");
-        exit(EXIT_FAILURE);
-    }
-
-    return User.Owner;
-}
-
 // I need to make it delete an account and print the others if any. and if the user remains without any account then delete the file and the Iban
 void deleteAccount(char Filename[])
 {
-    // We attempt to remove the file
-    if (remove(Filename) == 0)
+    View_account(Filename);
+    int choice, accountToDelete, validInput = 0;
+
+    do
     {
-        printf("Deleted successfully\n");
-    }
-    else
-    {
-        perror("Unable to delete the file");
-        exit(EXIT_FAILURE);
+        printf("Do you want to delete all accounts (0) or just one (1)? ");
+        if (scanf("%d", &choice) == 1)
+        {
+            // Check if the input is within the expected range (0 or 1)
+            if (choice == 0 || choice == 1)
+            {
+                validInput = 1;
+            }
+            else
+            {
+                printf("Invalid choice. Please enter 0 or 1.\n");
+            }
+        }
+        else
+        {
+            // Clear input buffer
+            while (getchar() != '\n')
+                ; // Clear until newline
+
+            printf("Invalid input. Please enter a valid number.\n");
+        }
+    } while (!validInput);
+
+    validInput = 0;
+
+    if (choice == 0)
+    { // We attempt to remove the file
+        if (remove(Filename) == 0)
+        {
+            printf("Deleted successfully\n");
+        }
+        else
+        {
+            perror("Unable to delete the file");
+            exit(EXIT_FAILURE);
+        }
+
+        // create a new account in case the user wants to
+        char yn, *fullname;
+        do
+        {
+            printf("You want to create a new one? (y/n)\n");
+            if (scanf(" %c", &yn) == 1)
+            {
+                // Check if the input is within the expected characters ('y' or 'n')
+                if (yn == 'y' || yn == 'n')
+                {
+                    validInput = 1;
+                }
+                else
+                {
+                    printf("Invalid choice. Please enter 'y' or 'n'.\n");
+                }
+            }
+            else
+            {
+                // Clear input buffer
+                while (getchar() != '\n')
+                    ; // Clear until newline
+
+                printf("Invalid input. Please enter a valid character.\n");
+            }
+        } while (!validInput);
+
+        if (yn == 'y')
+        {
+            char *token = strtok(Filename, ".");
+            fullname = malloc(sizeof(token));
+            strcpy(fullname, token);
+            strcat(Filename, ".csv");
+            Create_account(Filename, fullname);
+        }
+        else if (yn != 'n' && yn != 'y')
+        {
+            printf("Invalid input!");
+        }
+        free(fullname);
     }
 
-    // create a new account in case the user wants to
-    char yn, *fullname;
-    printf("You want to create a new one?(y/n)\n");
-    scanf(" %c", &yn);
+    validInput = 0;
+    char line[256];
 
-    if (yn == 'y')
+    if (choice == 1)
     {
-        char *token = strtok(Filename, ".");
-        fullname = malloc(sizeof(token));
-        strcpy(fullname, token);
-        strcat(Filename, ".csv");
-        Create_account(Filename, fullname);
-    }
-    else if (yn != 'n' && yn != 'y')
-    {
-        printf("Invalid input!");
-    }
+        int row = -1, counter = check_last_line(Filename);
+        FILE *fp = fopen(Filename, "r");
+        FILE *tempFp = fopen("temp.csv", "w");
 
-    free(fullname);
+        do
+        {
+            printf("Which account do you want to delete? ");
+            if (scanf("%d", &accountToDelete) == 1)
+            {
+                // Check if the input is within the valid range (1 to counter)
+                if (accountToDelete >= 1 && accountToDelete <= counter - 1)
+                {
+                    validInput = 1;
+                }
+                else
+                {
+                    printf("Select an account from 1 to %d.\n", counter - 1);
+                }
+            }
+            else
+            {
+                // Clear input buffer
+                while (getchar() != '\n')
+                    ; // Clear until newline
+
+                printf("Invalid input. Please enter a valid integer.\n");
+            }
+        } while (!validInput);
+
+        int lastNonEmptyLine = -1;
+
+        // First pass: find the last non-empty line excluding the account to delete
+        while (fgets(line, sizeof(line), fp) != NULL)
+        {
+            size_t len = strlen(line);
+            if (len > 0 && line[len - 1] == '\n')
+            {
+                line[len - 1] = '\0';
+            }
+            if (!isEmpty(line) && row != accountToDelete)
+            {
+                lastNonEmptyLine = row;
+            }
+            row++;
+        }
+
+        rewind(fp);
+        row = 0;
+        int writeCount = 0;
+
+        // Second pass: copy lines, excluding the specified account and newlines after the last line
+        while (fgets(line, sizeof(line), fp) != NULL)
+        {
+            size_t len = strlen(line);
+            if (len > 0 && line[len - 1] == '\n')
+            {
+                line[len - 1] = '\0';
+            }
+            if (row == accountToDelete || isEmpty(line))
+            {
+                row++;
+                continue; // Skip the line to delete or empty lines
+            }
+
+            if (writeCount > 0)
+            {
+                fputc('\n', tempFp); // Add newline before every line except the first
+            }
+            fputs(line, tempFp);
+            writeCount++;
+            row++;
+        }
+
+        fclose(fp);
+        fclose(tempFp);
+
+        remove(Filename);
+        rename("temp.csv", Filename);
+    }
     // File has been successfully removed, no need to close it
     clearConsole();
 }
@@ -703,9 +622,9 @@ void Edit_account(char ColumnToEdit[], char Filename[])
         exit(EXIT_FAILURE);
     }
 
-    ColumnToEdit[255] = '\0';
+    // ColumnToEdit[255] = '\0';
 
-    User.Owner = loadUserOwner(Filename);
+    Account.Owner = loadUserOwner(Filename);
 
     strlwr(ColumnToEdit);
 
@@ -714,13 +633,30 @@ void Edit_account(char ColumnToEdit[], char Filename[])
 
     if (strcmp(ColumnToEdit, "iban") != 0)
     {
-        printf("What row do you want to edit?");
-        scanf("%d", &rowToEdit);
+        int counter = check_last_line(Filename), validInput;
+        do
+        {
+            printf("What row do you want to edit? ");
+            validInput = scanf("%d", &rowToEdit);
 
-        //need to find a way to print it properly inside the file. The problem persists when changing the amount
+            // Clear the input buffer if the input was not valid
+            if (validInput != 1)
+            {
+                while (getchar() != '\n')
+                    ; // discard invalid input
+                printf("Invalid input. Please enter an integer.\n");
+            }
+            else if (rowToEdit < 1 || rowToEdit > counter - 1)
+            {
+                printf("The row must be between 1 and %d\n", counter - 1);
+            }
+
+        } while (validInput != 1 || rowToEdit < 1 || rowToEdit > counter - 1);
+
         while (fgets(line, sizeof(line), originalFile) != NULL)
         {
             currentRow++;
+
             if (currentRow == rowToEdit)
             {
                 token = strtok(line, ",");
@@ -741,8 +677,8 @@ void Edit_account(char ColumnToEdit[], char Filename[])
                 // Check if the column we want to edit is the coin column and then update the token so that the next prints in the .csv file will have the correct column element
                 if (strcmp(ColumnToEdit, "coin") == 0)
                 {
-                    User.Coin = GetCoin();
-                    fprintf(tempFile, "%s,", User.Coin);
+                    Account.Coin = GetCoin();
+                    fprintf(tempFile, "%s,", Account.Coin);
                     token = strtok(NULL, ",");
                 }
                 else
@@ -753,31 +689,68 @@ void Edit_account(char ColumnToEdit[], char Filename[])
                 // Check if the column we want to edit is the amount column and then update the token so that the next prints in the .csv file will have the correct column element
                 if (strcmp(ColumnToEdit, "amount") == 0)
                 {
-                    User.Amount = GetAmount();
-                    fprintf(tempFile, "%llu", User.Amount);
-                    token = strtok(NULL, ",");
+                    Account.Amount = GetAmount();
+                    fprintf(tempFile, "%llu", Account.Amount);
+                    if (currentRow != counter - 1)
+                    {
+                        fputs("\n", tempFile);
+                    }
                 }
                 else
                 {
                     fprintf(tempFile, "%s", token);
-                    token = strtok(NULL, ",");
                 }
+
+                // if (currentRow != counter)
+                // {
+                //     fprintf(tempFile, "\n");
+                // }
+
                 continue;
             }
             fprintf(tempFile, "%s", line);
         }
+        // if there are empty lines
+        rewind(tempFile);
+        int row = 0;
+        int writeCount = 0;
+
+        // Second pass: copy lines, excluding the specified account and newlines after the last line
+        while (fgets(line, sizeof(line), tempFile) != NULL)
+        {
+            size_t len = strlen(line);
+            if (len > 0 && line[len - 1] == '\n')
+            {
+                line[len - 1] = '\0';
+            }
+            if (row == rowToEdit || isEmpty(line))
+            {
+                row++;
+                continue; // Skip the line to delete or empty lines
+            }
+
+            if (writeCount > 0)
+            {
+                fputc('\n', tempFile); // Add newline before every line except the first
+            }
+            fputs(line, tempFile);
+            writeCount++;
+            row++;
+        }
     }
-    // a little messy but kinda does it's job( need to fix the small errors xd)
     else
     {
         char lineIbans[256], lineCopy[256];
-        User.Iban = GetIban();
+        int row = 0;
+        Account.Iban = GetIban(1, Account.Owner);
 
         // change Iban inside of the Ibans.csv
         char *OwnerTokenIban;
 
         FILE *OriginalIbans = fopen("Ibans.csv", "r");
         FILE *tempIbans = fopen("tempIbans.csv", "w");
+
+        int counter = check_last_line("Ibans.csv");
 
         if (OriginalIbans == NULL || tempIbans == NULL)
         {
@@ -786,24 +759,38 @@ void Edit_account(char ColumnToEdit[], char Filename[])
         }
 
         // it's printing the same thing multiple times. Need to fix
+
         while (fgets(lineIbans, sizeof(lineIbans), OriginalIbans) != NULL)
         {
             strcpy(lineCopy, lineIbans);
-            OwnerTokenIban = strtok(lineIbans, ",");
-            // change only the row that is reserved for the user that owns the Iban
-            if (strcmp(User.Owner, OwnerTokenIban) == 0)
+            OwnerTokenIban = strtok(lineCopy, ",");
+            row++;
+            if (strcmp(Account.Owner, OwnerTokenIban) == 0)
             {
-                fprintf(tempIbans, "%s,%s", User.Owner, User.Iban);
+                fprintf(tempIbans, "%s,%s", Account.Owner, Account.Iban);
+                if (row != counter)
+                {
+                    fprintf(tempIbans, "\n");
+                }
                 continue;
             }
-            fprintf(tempIbans, "%s", lineCopy);
+
+            fprintf(tempIbans, "%s", lineIbans);
         }
 
         fclose(tempIbans);
         fclose(OriginalIbans);
 
-        remove("Ibans.csv");
-        rename("tempIbans.csv", "Ibans.csv");
+        if (remove("Ibans.csv") != 0)
+        {
+            perror("Error deleting Ibans.csv");
+            exit(EXIT_FAILURE);
+        }
+        if (rename("tempIbans.csv", "Ibans.csv") != 0)
+        {
+            perror("Error renaming tempIbans.csv to Ibans.csv");
+            exit(EXIT_FAILURE);
+        }
 
         int flag = 0;
 
@@ -825,7 +812,7 @@ void Edit_account(char ColumnToEdit[], char Filename[])
                 // printing the Owner
                 fprintf(tempFile, "%s,", token);
                 // printing the Iban
-                fprintf(tempFile, "%s,", User.Iban);
+                fprintf(tempFile, "%s,", Account.Iban);
                 token = strtok(NULL, ",");
                 token = strtok(NULL, ",");
                 // printing the Coin
@@ -839,9 +826,18 @@ void Edit_account(char ColumnToEdit[], char Filename[])
     fclose(originalFile);
     fclose(tempFile);
 
-    free(User.Owner);
+    free(Account.Owner);
 
-    remove(Filename);
-    rename("temp.csv", Filename);
+    if (remove(Filename) != 0)
+    {
+        perror("Error deleting original file");
+        exit(EXIT_FAILURE);
+    }
+    if (rename("temp.csv", Filename) != 0)
+    {
+        perror("Error renaming temp file to original file");
+        exit(EXIT_FAILURE);
+    }
+
     clearConsole();
 }

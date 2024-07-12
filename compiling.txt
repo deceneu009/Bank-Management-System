@@ -1,4 +1,4 @@
-gcc -o Bank.exe Bank.c Functionalities.c Account.c -g -Wall
+gcc -o Bank.exe Bank.c Functionalities.c Account.c Utils.c -g -Wall
 .\Bank.exe [surname][name]
             |
             |
