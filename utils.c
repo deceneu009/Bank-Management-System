@@ -210,35 +210,66 @@ char *GetCoin()
 unsigned long long int GetAmount()
 {
     unsigned long long int Amounts;
-    char term;
-    // reading the amount and checking the size
-    do
-    {
-        printf("Enter Amount:");
-        // check if the Amount was introduced correctly
-        if (scanf("%lld%c", &Amounts, &term) != 2 || term != '\n')
-        {
-            printf("Failure!The AMOUNT must contain only digits\n");
+    char input[256];
+    char *endptr;
 
-            // Clear input buffer
-            while (getchar() != '\n')
-                ; // Clear until newline
-        }
-        // if it was then we check if it is less than the biggest lld value and if it is bigger than 0
-        else
+    while (getchar() != '\n')
+        ;
+
+    // Reading the amount and checking the size
+    while (1)
+    {
+        printf("Enter Amount: ");
+        if (fgets(input, sizeof(input), stdin) == NULL)
         {
-            if (Amounts < ULLONG_MAX && Amounts >= 0)
+            printf("Failure! The AMOUNT must contain only digits\n");
+            continue;
+        }
+
+        // Remove newline character from the input
+        input[strcspn(input, "\n")] = '\0';
+
+        // Check if the input is empty
+        if (input[0] == '\0')
+        {
+            printf("Failure! The AMOUNT must contain only digits higher than 0\n");
+            continue;
+        }
+
+        // Check if the input contains any non-digit characters
+        int isValid = 1;
+        for (int i = 0; i < strlen(input); i++)
+        {
+            if (!isdigit(input[i]))
+            {
+                isValid = 0;
+                break;
+            }
+        }
+
+        if (!isValid)
+        {
+            printf("Failure! The AMOUNT must contain only digits higher than 0\n");
+            continue;
+        }
+
+        // Convert string to unsigned long long int
+        Amounts = strtoull(input, &endptr, 10);
+
+        // Check if the conversion was successful
+        if (*endptr == '\0')
+        {
+            if (Amounts <= ULLONG_MAX)
                 break;
             else
                 printf("Amount too big! Try another one\n");
-
-            if (Amounts < 0)
-            {
-                printf("The amount can't be less than 0");
-                continue;
-            }
         }
-    } while (1);
+        else
+        {
+            printf("Failure! The AMOUNT must contain only digits higher than 0\n");
+        }
+    }
+
     return Amounts;
 }
 

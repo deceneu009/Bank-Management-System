@@ -291,7 +291,7 @@ void deleteAccount(char Filename[])
     clearConsole();
 }
 
-// Transaction between two accounts owned by the same person
+// Transaction between two accounts
 void Transactions(char Filename1[], char Filename2[])
 {
     char *filenameT1, *filenameT2;
@@ -318,27 +318,41 @@ void Transactions(char Filename1[], char Filename2[])
         exit(EXIT_FAILURE);
     }
 
-    char *amounts1, *amounts2;
-    char line[256];
-    int currentRow1, currentRow2;
+    char *amounts1, *amounts2, line[256];
+    int currentRow1 = -1, currentRow2 = -1, wantedRow1 = 0, wantedRow2 = 0, counter1 = check_last_line(filenameT1), counter2 = check_last_line(filenameT2), validInput;
     unsigned long long int amount1 = 0, amount2 = 0, transaction = 0;
     const char *Header[] = {"owner", "iban", "coin", "amount"};
 
-    currentRow1 = 0;
-    currentRow2 = 0;
+    View_account(filenameT1);
+
+    // make sure the row is correct
+    do
+    {
+        printf("What row do you want to edit?");
+        validInput = scanf("%d", &wantedRow1);
+
+        if (validInput != 1)
+        {
+            while (getchar() != '\n')
+                ;
+            printf("Invalid input. Please enter an integer.\n");
+        }
+        else if (wantedRow1 < 1 || wantedRow1 > counter1 - 1)
+        {
+            printf("THe row must be between 1 and %d\n", counter2 - 1);
+        }
+    } while (validInput != 1 || wantedRow1 < 1 || wantedRow1 > counter1 - 1);
 
     while (fgets(line, sizeof(line), originalFile1) != NULL)
     {
-        // If it is not the requested row we skip the iteration
-        if (currentRow1 == 0)
-        {
-            currentRow1++;
-            continue;
-        }
+        currentRow1++;
 
         // we duplicate the requested row into amounts1
-        amounts1 = strdup(line);
-        break;
+        if (currentRow1 == wantedRow1)
+        {
+            amounts1 = strdup(line);
+            break;
+        }
     }
 
     // We tokenize the row so we can modify the specific column we want to modify
@@ -357,18 +371,36 @@ void Transactions(char Filename1[], char Filename2[])
         break;
     }
 
+    View_account(filenameT2);
+
+    // we make sure that the row is correct
+    do
+    {
+        printf("What row do you want to edit? ");
+        validInput = scanf("%d", &wantedRow2);
+
+        if (validInput != 1)
+        {
+            while (getchar() != '\n')
+                ;
+            printf("Invalid input. Please enter an integer.\n");
+        }
+        else if (wantedRow2 < 1 || wantedRow2 > counter2 - 1)
+        {
+            printf("THe row must be between 1 and %d\n", counter2 - 1);
+        }
+    } while (validInput != 1 || wantedRow2 < 1 || wantedRow2 > counter2 - 1);
+
     while (fgets(line, sizeof(line), originalFile2) != NULL)
     {
-        // If it is not the requested row we skip the iteration
-        if (currentRow2 == 0)
-        {
-            currentRow2++;
-            continue;
-        }
+        currentRow2++;
 
         // we duplicate the requested row into amounts2
-        amounts2 = strdup(line);
-        break;
+        if (currentRow2 == wantedRow2)
+        {
+            amounts2 = strdup(line);
+            break;
+        }
     }
 
     char *token2 = strtok(amounts2, ",");
@@ -409,7 +441,6 @@ void Transactions(char Filename1[], char Filename2[])
             if (remove("temp1.csv") != 0)
             {
                 perror("Error removing temp1.csv");
-                // Handle error (e.g., exit program)
             }
         }
 
@@ -419,7 +450,6 @@ void Transactions(char Filename1[], char Filename2[])
             if (remove("temp2.csv") != 0)
             {
                 perror("Error removing temp2.csv");
-                // Handle error (e.g., exit program)
             }
         }
         return;
@@ -464,6 +494,7 @@ void Transactions(char Filename1[], char Filename2[])
             }
         }
 
+        // most probably bad logic...may be something that I did when I encountered a bug, but now I am too afraid to delete it
         if ((amount2 + transaction) > transaction)
         {
             amount1 -= transaction;
@@ -478,79 +509,101 @@ void Transactions(char Filename1[], char Filename2[])
     printf("Amount from the other account: %llu\n", amount2);
     printf("\n");
 
-    currentRow1 = 0;
+    currentRow1 = -1;
 
     // rewind the OriginalFile1 so that it begins the reading from the beginning again
     rewind(originalFile1);
 
+    int flag = 0;
+
     while (fgets(line, sizeof(line), originalFile1) != NULL)
     {
+        currentRow1++;
         // until we reach the row where the amount we want to edit is we will put every row into the temp file
-        if (currentRow1 == 0)
+        if (currentRow1 != wantedRow1)
         {
-            currentRow1++;
             // we put the rows in temp file
             fprintf(tempFile1, "%s", line);
             continue;
         }
 
         // we duplicate the line that we want into amounts1
-        amounts1 = strdup(line);
-
-        // We tokenize the row so we can modify the amount
-        char *token1 = strtok(amounts1, ",");
-        for (int i = 0; i < 4; i++)
+        if (flag != 1)
         {
-            // Iterate over the number of elements in Header
-            if (strcmp(Header[i], "amount") != 0)
-            {
-                fprintf(tempFile1, "%s,", token1);
-                token1 = strtok(NULL, ",");
-            }
+            amounts1 = strdup(line);
 
-            // When we reach the amount column we edit in the temp file by puting the new value of the amount
-            if (strcmp(Header[i], "amount") == 0)
+            // We tokenize the row so we can modify the amount
+            char *token1 = strtok(amounts1, ",");
+            for (int i = 0; i < 4; i++)
             {
-                fprintf(tempFile1, "%llu", amount1);
-                token1 = strtok(NULL, ",");
+                // Iterate over the number of elements in Header
+                if (strcmp(Header[i], "amount") != 0)
+                {
+                    fprintf(tempFile1, "%s,", token1);
+                    token1 = strtok(NULL, ",");
+                }
+
+                // When we reach the amount column we edit in the temp file by puting the new value of the amount
+                if (strcmp(Header[i], "amount") == 0)
+                {
+                    fprintf(tempFile1, "%llu", amount1);
+                    token1 = strtok(NULL, ",");
+                }
             }
+            flag = 1;
+            if (currentRow1 != counter1 - 1)
+            {
+                fprintf(tempFile1, "\n");
+            }
+            continue;
         }
+        fprintf(tempFile1, "%s", line);
     }
 
-    currentRow2 = 0;
+    currentRow2 = -1;
 
     // rewind the OriginalFile2 so that it begins the reading from the beginning again
     rewind(originalFile2);
 
+    flag = 0;
+
     while (fgets(line, sizeof(line), originalFile2) != NULL)
     {
-        if (currentRow2 == 0)
+        currentRow2++;
+        if (currentRow2 != wantedRow2)
         {
-            currentRow2++;
-
             fprintf(tempFile2, "%s", line);
             continue;
         }
+        if (flag != 1)
+        {
+            amounts2 = strdup(line);
 
-        amounts2 = strdup(line);
+            // We tokenize the row so we can modify the specific column we want to modify
+            char *token2 = strtok(amounts2, ",");
+            for (int i = 0; i < 4; i++)
+            { // Iterate over the number of elements in Header
+                if (strcmp(Header[i], "amount") != 0)
+                {
+                    fprintf(tempFile2, "%s,", token2);
+                    token2 = strtok(NULL, ",");
+                }
 
-        // We tokenize the row so we can modify the specific column we want to modify
-        char *token2 = strtok(amounts2, ",");
-        for (int i = 0; i < 4; i++)
-        { // Iterate over the number of elements in Header
-            if (strcmp(Header[i], "amount") != 0)
-            {
-                fprintf(tempFile2, "%s,", token2);
-                token2 = strtok(NULL, ",");
+                // We check if the element we want to edit exists
+                if (strcmp(Header[i], "amount") == 0)
+                {
+                    fprintf(tempFile2, "%llu", amount2);
+                    token2 = strtok(NULL, ",");
+                }
             }
-
-            // We check if the element we want to edit exists
-            if (strcmp(Header[i], "amount") == 0)
+            flag = 1;
+            if (currentRow2 != counter2 - 1)
             {
-                fprintf(tempFile2, "%llu", amount2);
-                token2 = strtok(NULL, ",");
+                fprintf(tempFile2, "\n");
             }
+            continue;
         }
+        fprintf(tempFile2, "%s", line);
     }
 
     // Close files
@@ -759,7 +812,6 @@ void Edit_account(char ColumnToEdit[], char Filename[])
         }
 
         // it's printing the same thing multiple times. Need to fix
-
         while (fgets(lineIbans, sizeof(lineIbans), OriginalIbans) != NULL)
         {
             strcpy(lineCopy, lineIbans);
